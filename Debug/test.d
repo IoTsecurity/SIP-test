@@ -41,7 +41,7 @@ test.d test.o: ../test.c ../interface.h \
  /usr/local/openssl/include/openssl/err.h \
  /usr/local/openssl/include/openssl/engine.h \
  /usr/local/openssl/include/openssl/rand.h \
- /usr/local/openssl/include/openssl/ui.h
+ /usr/local/openssl/include/openssl/ui.h ../test.h
 
 ../interface.h:
 
@@ -130,3 +130,5 @@ test.d test.o: ../test.c ../interface.h \
 /usr/local/openssl/include/openssl/rand.h:
 
 /usr/local/openssl/include/openssl/ui.h:
+
+../test.h:

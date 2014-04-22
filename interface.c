@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <wait.h>
+#include "test.h"
 
 #define HOME "./"
 const char *CAID = "0";
@@ -1501,6 +1502,10 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	unsigned char *text = malloc(textlen);
 
 	kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
+	printf("ECDH_keydata:\n");
+	printfx(ECDH_keydata,KEY_LEN);
+	printf("output:\n");
+	printfx(output,outputlen);
 
 	int i;
 	if( (i=getKeyRingNum(&Keybox, rc->peer_id)) < 0 ){
@@ -1666,6 +1671,10 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 		unsigned char *output = malloc(outputlen);
 		unsigned char *text = malloc(textlen);
 		kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
+		printf("ECDH_keydata:\n");
+		printfx(ECDH_keydata,KEY_LEN);
+		printf("output:\n");
+		printfx(output,outputlen);
 
 		int i;
 		if( (i=getKeyRingNum(&Keybox, rc->peer_id)) < 0 ){
@@ -1693,6 +1702,7 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 // Unicast key negotiation request
 int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicast_key_nego_requ_packet)
 {
+	int i;
 	printf("In ProcessUnicastKeyNegoRequest:\n");
 
 	// fill flag
@@ -1706,9 +1716,22 @@ int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicas
 	memcpy(text+sizeof(rc->peer_MACaddr.macaddr), rc->self_MACaddr.macaddr, sizeof(rc->self_MACaddr.macaddr));
 	hmac_sha256(text, textlen, Keybox.keyrings[getKeyRingNum(&Keybox, rc->peer_id)].MasterKey,
 			KEY_LEN, rc->MK_ID, SHA256_DIGEST_SIZE);
+
+	printf("Keybox.keyrings[getKeyRingNum(&Keybox, rc->peer_id)].MasterKey:%d\n",KEY_LEN);
+	for(i=0;i<KEY_LEN;i++)
+	{
+		printf("%2x ",Keybox.keyrings[getKeyRingNum(&Keybox, rc->peer_id)].MasterKey[i]);
+	}
+	printf("\n");
+
 	free(text);
 	memcpy(unicast_key_nego_requ_packet->MK_ID, rc->MK_ID, SHA256_DIGEST_SIZE);
-
+	printf("unicast_key_nego_requ_packet->MK_ID:\n");
+	for(i=0;i<SHA256_DIGEST_SIZE;i++)
+	{
+		printf("%2x ",unicast_key_nego_requ_packet->MK_ID[i]);
+	}
+	printf("\n");
 	// fill addid
 	memcpy(unicast_key_nego_requ_packet->addid.mac1, rc->peer_MACaddr.macaddr, sizeof(rc->peer_MACaddr.macaddr));
 	memcpy(unicast_key_nego_requ_packet->addid.mac2, rc->self_MACaddr.macaddr, sizeof(rc->self_MACaddr.macaddr));
@@ -1742,7 +1765,7 @@ int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicas
 // step8: SIP UA(NVR) - SIP Server
 // Unicast key negotiation response
 int HandleUnicastKeyNegoRequest(RegisterContext *rc, const UnicastKeyNegoRequ *unicast_key_nego_requ_packet)
-{
+{int i;
 	printf("In HandleUnicastKeyNegoRequest:\n");
 
 		//verify sign of AE
@@ -1780,9 +1803,32 @@ int HandleUnicastKeyNegoRequest(RegisterContext *rc, const UnicastKeyNegoRequ *u
 		memcpy(text+sizeof(rc->self_MACaddr.macaddr), rc->peer_MACaddr.macaddr, sizeof(rc->peer_MACaddr.macaddr));
 		hmac_sha256(text, textlen, Keybox.keyrings[getKeyRingNum(&Keybox, rc->peer_id)].MasterKey,
 				KEY_LEN, rc->MK_ID, SHA256_DIGEST_SIZE);
+
+		printf("Keybox.keyrings[getKeyRingNum(&Keybox, rc->peer_id)].MasterKey:%d\n",KEY_LEN);
+		for(i=0;i<KEY_LEN;i++)
+		{
+			printf("%2x ",Keybox.keyrings[getKeyRingNum(&Keybox, rc->peer_id)].MasterKey[i]);
+		}
+		printf("\n");
+
 		free(text);
 		if(memcmp(unicast_key_nego_requ_packet->MK_ID, rc->MK_ID, SHA256_DIGEST_SIZE)){
 			printf("ae's master key id verify failed.\n");
+
+			printf("unicast_key_nego_requ_packet->MK_ID:\n");
+			for(i=0;i<SHA256_DIGEST_SIZE;i++)
+			{
+				printf("%2x ",unicast_key_nego_requ_packet->MK_ID[i]);
+			}
+			printf("\n");
+
+			printf("rc->MK_ID:\n");
+			for(i=0;i<SHA256_DIGEST_SIZE;i++)
+			{
+				printf("%2x ",rc->MK_ID[i]);
+			}
+			printf("\n");
+
 			return FALSE;
 		}
 
