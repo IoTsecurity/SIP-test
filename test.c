@@ -10,6 +10,17 @@
 #include <string.h>
 
 #include "interface.h"
+
+KeyBox KeyboxIPC;
+KeyBox KeyboxNVR;
+KeyBox KeyboxSIPserver;
+
+SecureLinks SecurelinksIPC;
+SecureLinks SecurelinksNVR;
+SecureLinks SecurelinksSIPserver;
+
+int changeTo(enum DeviceType from_type,enum DeviceType to_type);
+
 /*
 int main5()
 {
@@ -99,6 +110,9 @@ int main()
 	rc_s->peer_MACaddr.macaddr[5]=0x3e;
 
 	Keybox.nkeys=0;
+	KeyboxIPC.nkeys=0;
+	KeyboxNVR.nkeys=0;
+	KeyboxSIPserver.nkeys=0;
 
 	RegisterContext *rc_c=(RegisterContext *)malloc(sizeof(RegisterContext));
 
@@ -198,16 +212,111 @@ printf("server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/
 	printf("client handle the access auth response packet------------finished\n");
 
 
-	printf("-----------register finished---------------");
+	printf("-----------register finished---------------\n");
 
+
+
+
+	printf("-----------nego begin---------------\n");
 	// key negorequest
-	//int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicast_key_nego_requ_packet);
-	//int HandleUnicastKeyNegoRequest(RegisterContext *rc, const UnicastKeyNegoRequ *unicast_key_nego_requ_packet);
+	printf("1-----in the server----\n");
+	UnicastKeyNegoRequ *unicast_key_nego_requ_packet_s=(UnicastKeyNegoRequ*)malloc (sizeof(UnicastKeyNegoRequ));
+	if(ProcessUnicastKeyNegoRequest(rc_s, unicast_key_nego_requ_packet_s)<1)
+	{
+		printf("ProcessUnicastKeyNegoRequest error\n");
+	}
 
+	printf("2-----in the IPC----\n");
+	changeTo(SIPserver,IPC);
+	UnicastKeyNegoRequ *unicast_key_nego_requ_packet_c=(UnicastKeyNegoRequ*)malloc (sizeof(UnicastKeyNegoRequ));
+	memcpy(unicast_key_nego_requ_packet_c,unicast_key_nego_requ_packet_s,sizeof(UnicastKeyNegoRequ));
+	if(HandleUnicastKeyNegoRequest(rc_c, unicast_key_nego_requ_packet_c)<1)
+	{
+		printf("HandleUnicastKeyNegoRequest error\n");
+	}
 
+	UnicastKeyNegoResp *unicast_key_nego_resp_packet_c=(UnicastKeyNegoResp*)malloc (sizeof(UnicastKeyNegoResp));
+	if(ProcessUnicastKeyNegoResponse(rc_c, unicast_key_nego_resp_packet_c)<1)
+	{
+		printf("ProcessUnicastKeyNegoResponse error\n");
+	}
+
+	printf("3-----in the server----\n");
+	changeTo(IPC,SIPserver);
+	UnicastKeyNegoResp *unicast_key_nego_resp_packet_s=(UnicastKeyNegoResp*)malloc (sizeof(UnicastKeyNegoResp));
+	memcpy(unicast_key_nego_resp_packet_s,unicast_key_nego_resp_packet_c,sizeof(UnicastKeyNegoResp));
+	if(HandleUnicastKeyNegoResponse(rc_s,unicast_key_nego_resp_packet_s)<1)
+	{
+		printf("HandleUnicastKeyNegoResponse error\n");
+	}
+
+	UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet_s=(UnicastKeyNegoConfirm*)malloc (sizeof(UnicastKeyNegoConfirm));
+	if(ProcessUnicastKeyNegoConfirm(rc_s,unicast_key_nego_confirm_packet_s)<1)
+	{
+		printf("ProcessUnicastKeyNegoConfirm error\n");
+	}
+
+	printf("4-----in the IPC----\n");
+	changeTo(SIPserver,IPC);
+	UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet_c=(UnicastKeyNegoConfirm*)malloc (sizeof(UnicastKeyNegoConfirm));
+	memcpy(unicast_key_nego_confirm_packet_c,unicast_key_nego_confirm_packet_s,sizeof(UnicastKeyNegoConfirm));
+	if(HandleUnicastKeyNegoConfirm(rc_c,unicast_key_nego_confirm_packet_c)<1)
+	{
+		printf("HandleUnicastKeyNegoConfirm error\n");
+	}
+	printf("----------------------------nego finished---------------------------------\n");
 
 }
+int changeTo(enum DeviceType from_type,enum DeviceType to_type)
+{
+	if(from_type==IPC)
+	{
+		memcpy(&KeyboxNVR,&Keybox,sizeof(KeyboxNVR));
+		memcpy(&SecurelinksNVR,&Securelinks,sizeof(SecurelinksNVR));
 
+	}
+	else if(from_type==NVR)
+	{
+		memcpy(&KeyboxIPC,&Keybox,sizeof(KeyboxIPC));
+		memcpy(&SecurelinksIPC,&Securelinks,sizeof(SecurelinksNVR));
+	}
+	else if(from_type==SIPserver)
+	{
+			memcpy(&KeyboxSIPserver,&Keybox,sizeof(KeyboxSIPserver));
+			memcpy(&SecurelinksIPC,&Securelinks,sizeof(SecurelinksNVR));
+		}
+	else
+	{
+		return 0;
+	}
+
+
+	if(to_type==IPC)
+	{
+		Self_type=IPC;
+		memcpy(&Keybox,&KeyboxIPC,sizeof(Keybox));
+		memcpy(&Securelinks,&SecurelinksIPC,sizeof(Securelinks));
+
+	}
+	else if(to_type==NVR)
+	{
+		Self_type=NVR;
+		memcpy(&Keybox,&KeyboxNVR,sizeof(Keybox));
+		memcpy(&Securelinks,&SecurelinksNVR,sizeof(Securelinks));
+	}
+	else if(to_type==SIPserver)
+	{
+		Self_type=SIPserver;
+		memcpy(&Keybox,&KeyboxSIPserver,sizeof(Keybox));
+		memcpy(&Securelinks,&SecurelinksSIPserver,sizeof(Securelinks));
+	}
+	else
+	{
+		return 0;
+	}
+
+	return 1;
+	}
 
 int codeTOChar(char *data,int lenth)
 {
