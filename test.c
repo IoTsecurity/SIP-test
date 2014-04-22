@@ -10,69 +10,16 @@
 #include <string.h>
 
 #include "interface.h"
-/*
-int main5()
-{
-	int i=0;
+#include "test.h"
 
-	unsigned char *ECDH_keydata; // shared secret
-	RegisterContext *rc=(RegisterContext *)malloc(sizeof(RegisterContext));;
-	AccessAuthRequ *access_auth_requ_packet=(AccessAuthRequ *)malloc(sizeof(AccessAuthRequ));;
-	AccessAuthResp *access_auth_resp_packet=(AccessAuthResp *)malloc(sizeof(AccessAuthResp));;
-	printf("sizeof(rc->keydata):%d\n",sizeof(rc->keydata));
-	printf("-1\n");
-	memcpy(&rc->keydata, genECDHtemppubkey(), sizeof(rc->keydata));
-	memcpy(&access_auth_requ_packet->asuekeydata, &rc->keydata, sizeof(access_auth_requ_packet->asuekeydata));
-printf("0\n");
+KeyBox KeyboxIPC;
+KeyBox KeyboxNVR;
+KeyBox KeyboxSIPserver;
 
-	char *keydata;
-	keydata=&access_auth_requ_packet->asuekeydata;
-	printf("keydata %d:\n",sizeof(access_auth_requ_packet->asuekeydata));
-	for(i=0;i<32;i++)
-	{
-		printf("%02x ",(unsigned char)keydata[i]);
-	}printf("\n");
+SecureLinks SecurelinksIPC;
+SecureLinks SecurelinksNVR;
+SecureLinks SecurelinksSIPserver;
 
-	memcpy(&rc->keydata, genECDHtemppubkey(), sizeof(rc->keydata));
-	memcpy(&access_auth_resp_packet->aekeydata, &rc->keydata, sizeof(access_auth_resp_packet->aekeydata));
-	size_t secretlen=KEY_LEN;
-
-
-	i=0;
-	unsigned char p[32];
-	//p[i++]=0x98; p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;p[i++]=0x98;p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;
-	//p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0xa0;p[i++]=0xbe;p[i++]=0x5f;p[i++]=0x00;
-	//p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0xb8;p[i++]=0x25;p[i++]=0x1c;p[i++]=0x08;
-	//p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;
-	//p[i++]=0x98; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x98 ; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ;
-	//p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0xa0 ; p[i++]=0xce ; p[i++]=0x5e ; p[i++]=0x00 ;
-	//p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0xda ; p[i++]=0xb4 ; p[i++]=0x09 ;
-	//p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00;
-
-	p[i++]=0x98 ; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x98 ; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ;
-	p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0xa0 ; p[i++]=0x6e ; p[i++]=0x73 ; p[i++]=0x00 ;
-	p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x4a ; p[i++]=0xa5 ; p[i++]=0x08 ;
-	p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00;
-	printf("i=%d p[i]:\n",i);
-	for(i=0;i<64;i++)
-	{
-		printf("%02x ",p[i]);
-	}printf("\n");
-
-	memcpy(p,&access_auth_requ_packet->asuekeydata,32);
-	printf("i=%d p[i]:\n",i);
-	for(i=0;i<64;i++)
-	{
-		printf("%02x ",p[i]);
-	}printf("\n");
-//memset(p,0,32);
-
-	printf("11111\n");
-	ECDH_keydata = genECDHsharedsecret(&rc->keydata, (EVP_PKEY *)p, &secretlen);
-	printf("22222\n");
-	return 1;
-	}
-*/
 int main()
 {
 
@@ -99,6 +46,9 @@ int main()
 	rc_s->peer_MACaddr.macaddr[5]=0x3e;
 
 	Keybox.nkeys=0;
+	KeyboxIPC.nkeys=0;
+	KeyboxNVR.nkeys=0;
+	KeyboxSIPserver.nkeys=0;
 
 	RegisterContext *rc_c=(RegisterContext *)malloc(sizeof(RegisterContext));
 
@@ -126,14 +76,14 @@ int main()
 
 	printf("start\n");
 	//----------------server send 401 Unauthorized packet--------------------------------------------
-	Self_type=SIPserver;
+	changeTo(IPC,SIPserver);
 	AuthActive *auth_active_packet_s=(AuthActive *)malloc(sizeof(AuthActive)*2);
 	ProcessWAPIProtocolAuthActive(rc_s,auth_active_packet_s);
 	codeTOChar(auth_active_packet_s,sizeof(AuthActive)*2);
 	printf("server send 401 Unauthorized packet---------finished\n");
 
 	//---------------client    send Register ( access auth request packet )-------------------------------------
-	Self_type=IPC;
+	changeTo(SIPserver,IPC);
 	AuthActive *auth_active_packet_c=(AuthActive *)malloc(sizeof(AuthActive)*2);
 	//memcpy(auth_active_packet_c,auth_active_packet_s,sizeof(AuthActive)*2);
 	memcpy(auth_active_packet_c,auth_active_packet_s,sizeof(AuthActive)*2);
@@ -149,7 +99,7 @@ decodeFromChar(auth_active_packet_s,sizeof(AuthActive)*2);
 
 
 	//-----------------------server   send the Access-Request ( cert auth request packet )--------------------------------------
-	Self_type=SIPserver;
+	changeTo(IPC,SIPserver);
 	AccessAuthRequ *access_auth_requ_packet_s=(AccessAuthRequ *)malloc(sizeof(AccessAuthRequ)*2);
 	memcpy(access_auth_requ_packet_s,access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	decodeFromChar(access_auth_requ_packet_s,sizeof(AccessAuthRequ)*2);
@@ -160,35 +110,35 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	printf("before ProcessWAPIProtocolCertAuthRequest\n");
 	ProcessWAPIProtocolCertAuthRequest(rc_s,access_auth_requ_packet_s,certificate_auth_requ_packet_s);
 
-//add lvshichao's interface
-//printf("---------------wait for interface----------------------\n");
-CertificateAuthResp *certificate_auth_resp_packet_s=(CertificateAuthResp *)malloc(sizeof(CertificateAuthResp));
-if(talk_to_asu(certificate_auth_requ_packet_s,certificate_auth_resp_packet_s)<0)
-{
-	printf("talk_to_asu error \n");
+	//add lvshichao's interface
+	//printf("---------------wait for interface----------------------\n");
+	CertificateAuthResp *certificate_auth_resp_packet_s=(CertificateAuthResp *)malloc(sizeof(CertificateAuthResp));
+	if(talk_to_asu(certificate_auth_requ_packet_s,certificate_auth_resp_packet_s)<0)
+	{
+		printf("talk_to_asu error \n");
+		}
+	printf("server   send the Access-Request ( cert auth request packet )----------------finished\n");
+
+
+	//----------------server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/FAILUE-----------------------------
+
+	AccessAuthResp *access_auth_resp_packet_s=(AccessAuthResp *)malloc(sizeof(AccessAuthResp));
+	if(HandleProcessWAPIProtocolCertAuthResp(rc_s,certificate_auth_requ_packet_s,
+			certificate_auth_resp_packet_s,access_auth_resp_packet_s)<1)
+	{
+		printf("HandleProcessWAPIProtocolCertAuthResp error\n");
 	}
-printf("server   send the Access-Request ( cert auth request packet )----------------finished\n");
+	printf("HandleProcessWAPIProtocolCertAuthResp ---------------------finished\n");
+	if(ProcessWAPIProtocolAccessAuthResp(rc_s,
+			access_auth_requ_packet_s, access_auth_resp_packet_s)<1)
+	{
+		printf("ProcessWAPIProtocolAccessAuthResp error\n");
+		}
+	printf("server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/FAILUE------------finished\n");
 
+	//----------------------client handle the access auth response packet---------------------------
 
-//----------------server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/FAILUE-----------------------------
-
-AccessAuthResp *access_auth_resp_packet_s=(AccessAuthResp *)malloc(sizeof(AccessAuthResp));
-if(HandleProcessWAPIProtocolCertAuthResp(rc_s,certificate_auth_requ_packet_s,
-		certificate_auth_resp_packet_s,access_auth_resp_packet_s)<1)
-{
-	printf("HandleProcessWAPIProtocolCertAuthResp error\n");
-}
-printf("HandleProcessWAPIProtocolCertAuthResp ---------------------finished\n");
-if(ProcessWAPIProtocolAccessAuthResp(rc_s,
-		access_auth_requ_packet_s, access_auth_resp_packet_s)<1)
-{
-	printf("ProcessWAPIProtocolAccessAuthResp error\n");
-	}
-printf("server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/FAILUE------------finished\n");
-
-//----------------------client handle the access auth response packet---------------------------
-
-	Self_type=IPC;
+	changeTo(SIPserver,IPC);
 	AccessAuthResp *access_auth_resp_packet_c=(AccessAuthResp *)malloc(sizeof(AccessAuthResp));
 	memcpy(access_auth_resp_packet_c,access_auth_resp_packet_s,sizeof(AccessAuthResp));
 	if(HandleWAPIProtocolAccessAuthResp(rc_c,access_auth_requ_packet_c,access_auth_resp_packet_c)<1)
@@ -198,15 +148,113 @@ printf("server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/
 	printf("client handle the access auth response packet------------finished\n");
 
 
-	printf("-----------register finished---------------");
+	printf("-----------register finished---------------\n");
 
+
+
+
+	printf("-----------nego begin---------------\n");
 	// key negorequest
-	//int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicast_key_nego_requ_packet);
-	//int HandleUnicastKeyNegoRequest(RegisterContext *rc, const UnicastKeyNegoRequ *unicast_key_nego_requ_packet);
+	printf("1-----in the server----\n");
+	changeTo(IPC,SIPserver);
+	UnicastKeyNegoRequ *unicast_key_nego_requ_packet_s=(UnicastKeyNegoRequ*)malloc (sizeof(UnicastKeyNegoRequ));
+	if(ProcessUnicastKeyNegoRequest(rc_s, unicast_key_nego_requ_packet_s)<1)
+	{
+		printf("ProcessUnicastKeyNegoRequest error\n");
+	}
 
+	printf("2-----in the IPC----\n");
+	changeTo(SIPserver,IPC);
+	UnicastKeyNegoRequ *unicast_key_nego_requ_packet_c=(UnicastKeyNegoRequ*)malloc (sizeof(UnicastKeyNegoRequ));
+	memcpy(unicast_key_nego_requ_packet_c,unicast_key_nego_requ_packet_s,sizeof(UnicastKeyNegoRequ));
+	if(HandleUnicastKeyNegoRequest(rc_c, unicast_key_nego_requ_packet_c)<1)
+	{
+		printf("HandleUnicastKeyNegoRequest error\n");
+	}
 
+	UnicastKeyNegoResp *unicast_key_nego_resp_packet_c=(UnicastKeyNegoResp*)malloc (sizeof(UnicastKeyNegoResp));
+	if(ProcessUnicastKeyNegoResponse(rc_c, unicast_key_nego_resp_packet_c)<1)
+	{
+		printf("ProcessUnicastKeyNegoResponse error\n");
+	}
+
+	printf("3-----in the server----\n");
+	changeTo(IPC,SIPserver);
+	UnicastKeyNegoResp *unicast_key_nego_resp_packet_s=(UnicastKeyNegoResp*)malloc (sizeof(UnicastKeyNegoResp));
+	memcpy(unicast_key_nego_resp_packet_s,unicast_key_nego_resp_packet_c,sizeof(UnicastKeyNegoResp));
+	if(HandleUnicastKeyNegoResponse(rc_s,unicast_key_nego_resp_packet_s)<1)
+	{
+		printf("HandleUnicastKeyNegoResponse error\n");
+	}
+
+	UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet_s=(UnicastKeyNegoConfirm*)malloc (sizeof(UnicastKeyNegoConfirm));
+	if(ProcessUnicastKeyNegoConfirm(rc_s,unicast_key_nego_confirm_packet_s)<1)
+	{
+		printf("ProcessUnicastKeyNegoConfirm error\n");
+	}
+
+	printf("4-----in the IPC----\n");
+	changeTo(SIPserver,IPC);
+	UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet_c=(UnicastKeyNegoConfirm*)malloc (sizeof(UnicastKeyNegoConfirm));
+	memcpy(unicast_key_nego_confirm_packet_c,unicast_key_nego_confirm_packet_s,sizeof(UnicastKeyNegoConfirm));
+	if(HandleUnicastKeyNegoConfirm(rc_c,unicast_key_nego_confirm_packet_c)<1)
+	{
+		printf("HandleUnicastKeyNegoConfirm error\n");
+	}
+	printf("----------------------------nego finished---------------------------------\n");
 
 }
+
+int changeTo(enum DeviceType from_type,enum DeviceType to_type)
+{
+	if(from_type==IPC)
+	{
+		memcpy(&KeyboxIPC,&Keybox,sizeof(KeyboxNVR));
+		memcpy(&SecurelinksIPC,&Securelinks,sizeof(SecurelinksIPC));
+
+	}
+	else if(from_type==NVR)
+	{
+		memcpy(&KeyboxNVR,&Keybox,sizeof(KeyboxIPC));
+		memcpy(&SecurelinksNVR,&Securelinks,sizeof(SecurelinksNVR));
+	}
+	else if(from_type==SIPserver)
+	{
+			memcpy(&KeyboxSIPserver,&Keybox,sizeof(KeyboxSIPserver));
+			memcpy(&SecurelinksSIPserver,&Securelinks,sizeof(SecurelinksSIPserver));
+		}
+	else
+	{
+		return 0;
+	}
+
+
+	if(to_type==IPC)
+	{
+		Self_type=IPC;
+		memcpy(&Keybox,&KeyboxIPC,sizeof(Keybox));
+		memcpy(&Securelinks,&SecurelinksIPC,sizeof(Securelinks));
+
+	}
+	else if(to_type==NVR)
+	{
+		Self_type=NVR;
+		memcpy(&Keybox,&KeyboxNVR,sizeof(Keybox));
+		memcpy(&Securelinks,&SecurelinksNVR,sizeof(Securelinks));
+	}
+	else if(to_type==SIPserver)
+	{
+		Self_type=SIPserver;
+		memcpy(&Keybox,&KeyboxSIPserver,sizeof(Keybox));
+		memcpy(&Securelinks,&SecurelinksSIPserver,sizeof(Securelinks));
+	}
+	else
+	{
+		return 0;
+	}
+
+	return 1;
+	}
 
 int codeTOChar(char *data,int lenth)
 {
@@ -231,3 +279,12 @@ int decodeFromChar(char *data,int lenth)
 	}
 	return 0;
 }
+int printfx(unsigned char *p, int len)
+{
+	int i;
+	for(i=0;i<len;i++)
+	{
+		printf("%2x ",p[i]);
+	}printf("\n");
+	return 1;
+	}
