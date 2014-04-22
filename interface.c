@@ -348,7 +348,7 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID)
 		fprintf(stderr, "Unable to open %s for RSA priv params\n", keyname);
 		return NULL;
 	}
-	printf("1\n");
+
 	rsa = RSA_new();
 	if ((rsa = PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL)) == NULL)
 	{
@@ -356,7 +356,7 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID)
 		return NULL;
 	}
 	fclose(fp);
-	printf("1\n");
+
 	// print
 	//printf("Content of Private key PEM file\n");
 	//RSA_print_fp(stdout, rsa, 0);
@@ -506,13 +506,16 @@ BOOL verify_sign(BYTE *input,int sign_input_len,BYTE * sign_value, unsigned int 
 // Return 32Byte digest
 void hmac_sha256(unsigned char *data, unsigned int data_len, unsigned char *key, unsigned int key_len, unsigned char* result, unsigned int result_len)
 {
+	unsigned char resultlocal[SHA256_DIGEST_SIZE];
+	unsigned int resultlen=result_len;
 	HMAC_CTX ctx;
 	HMAC_CTX_init(&ctx);
     //HMAC_Init_ex(&ctx, key, 16, EVP_sha256(), NULL);
 	HMAC_Init_ex(&ctx, key, key_len, EVP_sha256(), NULL);
     //HMAC_Update(&ctx, data, 8);
 	HMAC_Update(&ctx, data, data_len);
-    HMAC_Final(&ctx, result, &result_len);
+    HMAC_Final(&ctx, resultlocal, &result_len);
+    memcpy(result, resultlocal, resultlen);
     HMAC_CTX_cleanup(&ctx);
 }
 
@@ -520,27 +523,43 @@ void kd_hmac_sha256(unsigned char *text, unsigned int text_len, unsigned char *k
 {
 	int i;
 	int j;
+	int outputlen=length;
 	for(i=0; i<length/SHA256_DIGEST_SIZE; i++,length-=SHA256_DIGEST_SIZE){
-/*		printf("i=%d, length=%d, text_len=%d\n",i,length,text_len);
-		printf("\noutput= ");
-		for(j=0; j<2*SHA256_DIGEST_SIZE; j++){
+		printf("\n [kd_hmac_sha256] i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\n output= ");
+		for(j=0; j<outputlen; j++){
+			printf("%02x ",output[j]);
+		}printf("\n");
+		for(; j<2*outputlen; j++){
 			printf("%02x ",output[j]);
 		}
-*/
+
 		hmac_sha256(text,text_len,key,key_len,&output[i*SHA256_DIGEST_SIZE],SHA256_DIGEST_SIZE);
 		text=&output[i*SHA256_DIGEST_SIZE];
 		text_len=SHA256_DIGEST_SIZE;
 	}
-	/*
+
 	if(length>0){
-		printf("i=%d, length=%d, text_len=%d\n",i,length,text_len);
-		printf("\noutput= ");
-		for(j=0; j<2*SHA256_DIGEST_SIZE; j++){
+		printf("\n [critical] i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\n output= ");
+		for(j=0; j<outputlen; j++){
+			printf("%02x ",output[j]);
+		}printf("\n");
+		for(; j<2*outputlen; j++){
 			printf("%02x ",output[j]);
 		}
+
 		hmac_sha256(text,text_len,key,key_len,&output[i*SHA256_DIGEST_SIZE],length);
+		printf("\n [critical] i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\n output= ");
+		for(j=0; j<outputlen; j++){
+			printf("%02x ",output[j]);
+		}printf("\n");
+		for(; j<2*outputlen; j++){
+			printf("%02x ",output[j]);
+		}
 	}
-	*/
+
 }
 
 /*************************************************
@@ -1464,13 +1483,13 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	unsigned int  sign_len;
 
 	privKey = getprivkeyfromprivkeyfile(rc->self_id);
-	printf("out1\n");
+
 	if(privKey == NULL)
 	{
 		printf("getprivkeyitsself().....failed!\n");
 		return FALSE;
 	}
-	printf("out2\n");
+
 	if(!gen_sign((BYTE *)access_auth_resp_packet,(sizeof(AccessAuthResp)-sizeof(access_auth_resp_packet->aesign)),sign_value, &sign_len,privKey))
 	{
 		printf("generate signature failed.\n");
@@ -1488,20 +1507,19 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	 */
 	unsigned char *ECDH_keydata; // shared secret
 	size_t secretlen=KEY_LEN;
-	printf("out3\n");
+	printf("\n=1\n");
 	ECDH_keydata = genECDHsharedsecret(&rc->keydata, &access_auth_requ_packet->asuekeydata, &secretlen);
-	printf("out4\n");
+	printf("\n=2\n");
 	char *tempstring = "masterkeyexpansionforkeyandadditionalnonce";
 	int outputlen = sizeof(Keybox.keyrings[0].MasterKey) + sizeof(rc->auth_id_next);
 	int textlen = sizeof(access_auth_requ_packet->aechallenge) +
 			sizeof(access_auth_requ_packet->asuechallenge) +
 			strlen(tempstring);
-	printf("out5\n");
+
 	unsigned char *output = malloc(outputlen);
 	unsigned char *text = malloc(textlen);
-
 	kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
-	printf("out6\n");
+
 	int i;
 	if( (i=getKeyRingNum(&Keybox, rc->peer_id)) < 0 ){
 		if(Keybox.nkeys >= MAXKEYRINGS){
@@ -1512,12 +1530,9 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 		Keybox.nkeys++;
 		}
 	}
-
 	memcpy(Keybox.keyrings[i].MasterKey, output, sizeof(Keybox.keyrings[i].MasterKey));
 	SHA256(output+sizeof(Keybox.keyrings[i].MasterKey), sizeof(rc->auth_id_next), rc->auth_id_next);
-
 	free(output);
-
 	free(text);
 
 	return TRUE;

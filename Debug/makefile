@@ -22,19 +22,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: test
+all: SIP-test
 
 # Tool invocations
-test: $(OBJS) $(USER_OBJS)
+SIP-test: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L/usr/local/openssl/lib -o "test" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L/usr/local/openssl/lib -o "SIP-test" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) test
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) SIP-test
 	-@echo ' '
 
 .PHONY: all clean dependents
