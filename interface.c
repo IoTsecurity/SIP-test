@@ -342,7 +342,6 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID)
 
 	if(annotation == 2)
 		printf("  key file name: %s\n", keyname);
-	printf("1\n");
 	if (fp == NULL)
 	{
 		fprintf(stderr, "Unable to open %s for RSA priv params\n", keyname);
@@ -523,43 +522,27 @@ void kd_hmac_sha256(unsigned char *text, unsigned int text_len, unsigned char *k
 {
 	int i;
 	int j;
-	int outputlen=length;
 	for(i=0; i<length/SHA256_DIGEST_SIZE; i++,length-=SHA256_DIGEST_SIZE){
-		printf("\n [kd_hmac_sha256] i=%d, length=%d, text_len=%d\n",i,length,text_len);
-		printf("\n output= ");
-		for(j=0; j<outputlen; j++){
-			printf("%02x ",output[j]);
-		}printf("\n");
-		for(; j<2*outputlen; j++){
+/*		printf("i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\noutput= ");
+		for(j=0; j<2*SHA256_DIGEST_SIZE; j++){
 			printf("%02x ",output[j]);
 		}
-
+*/
 		hmac_sha256(text,text_len,key,key_len,&output[i*SHA256_DIGEST_SIZE],SHA256_DIGEST_SIZE);
 		text=&output[i*SHA256_DIGEST_SIZE];
 		text_len=SHA256_DIGEST_SIZE;
 	}
-
+	/*
 	if(length>0){
-		printf("\n [critical] i=%d, length=%d, text_len=%d\n",i,length,text_len);
-		printf("\n output= ");
-		for(j=0; j<outputlen; j++){
-			printf("%02x ",output[j]);
-		}printf("\n");
-		for(; j<2*outputlen; j++){
+		printf("i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\noutput= ");
+		for(j=0; j<2*SHA256_DIGEST_SIZE; j++){
 			printf("%02x ",output[j]);
 		}
-
 		hmac_sha256(text,text_len,key,key_len,&output[i*SHA256_DIGEST_SIZE],length);
-		printf("\n [critical] i=%d, length=%d, text_len=%d\n",i,length,text_len);
-		printf("\n output= ");
-		for(j=0; j<outputlen; j++){
-			printf("%02x ",output[j]);
-		}printf("\n");
-		for(; j<2*outputlen; j++){
-			printf("%02x ",output[j]);
-		}
 	}
-
+	*/
 }
 
 /*************************************************
@@ -1483,7 +1466,6 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	unsigned int  sign_len;
 
 	privKey = getprivkeyfromprivkeyfile(rc->self_id);
-
 	if(privKey == NULL)
 	{
 		printf("getprivkeyitsself().....failed!\n");
@@ -1507,17 +1489,17 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	 */
 	unsigned char *ECDH_keydata; // shared secret
 	size_t secretlen=KEY_LEN;
-	printf("\n=1\n");
+
 	ECDH_keydata = genECDHsharedsecret(&rc->keydata, &access_auth_requ_packet->asuekeydata, &secretlen);
-	printf("\n=2\n");
+
 	char *tempstring = "masterkeyexpansionforkeyandadditionalnonce";
 	int outputlen = sizeof(Keybox.keyrings[0].MasterKey) + sizeof(rc->auth_id_next);
-	int textlen = sizeof(access_auth_requ_packet->aechallenge) +
-			sizeof(access_auth_requ_packet->asuechallenge) +
-			strlen(tempstring);
-
+	int textlen = 2*RAND_LEN + strlen(tempstring);
 	unsigned char *output = malloc(outputlen);
 	unsigned char *text = malloc(textlen);
+	memcpy(text, access_auth_requ_packet->aechallenge, RAND_LEN);
+	memcpy(text+RAND_LEN, access_auth_requ_packet->asuechallenge, RAND_LEN);
+	memcpy(text+2*RAND_LEN, tempstring, strlen(tempstring));
 	kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
 
 	int i;
@@ -1530,9 +1512,12 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 		Keybox.nkeys++;
 		}
 	}
+
 	memcpy(Keybox.keyrings[i].MasterKey, output, sizeof(Keybox.keyrings[i].MasterKey));
 	SHA256(output+sizeof(Keybox.keyrings[i].MasterKey), sizeof(rc->auth_id_next), rc->auth_id_next);
+
 	free(output);
+
 	free(text);
 
 	return TRUE;
@@ -1675,11 +1660,12 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 
 		char *tempstring = "masterkeyexpansionforkeyandadditionalnonce";
 		int outputlen = sizeof(Keybox.keyrings[0].MasterKey) + sizeof(rc->auth_id_next);
-		int textlen = sizeof(access_auth_requ_packet->aechallenge) +
-				sizeof(access_auth_requ_packet->asuechallenge) +
-				strlen(tempstring);
+		int textlen = 2*RAND_LEN + strlen(tempstring);
 		unsigned char *output = malloc(outputlen);
 		unsigned char *text = malloc(textlen);
+		memcpy(text, access_auth_requ_packet->aechallenge, RAND_LEN);
+		memcpy(text+RAND_LEN, access_auth_requ_packet->asuechallenge, RAND_LEN);
+		memcpy(text+2*RAND_LEN, tempstring, strlen(tempstring));
 		kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
 
 		int i;
