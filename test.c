@@ -11,7 +11,7 @@
 
 #include "interface.h"
 /*
-int main3()
+int main4()
 {
 	int i=0;
 
