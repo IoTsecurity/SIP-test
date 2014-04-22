@@ -203,6 +203,19 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	}
 	printf("----------------------------nego finished---------------------------------\n");
 
+
+
+	printf("----------------------------distribute begin---------------------------------\n");
+
+	int ProcessP2PKeyDistribution(P2PLinkContext *lc, P2PKeyDistribution *p2p_key_dist_packet);
+
+	// step21+
+	int HandleP2PKeyDistribution(P2PLinkContext *lc, const P2PKeyDistribution *p2p_key_dist_packet);
+
+
+	printf("----------------------------distribute finished---------------------------------\n");
+
+
 }
 
 int changeTo(enum DeviceType from_type,enum DeviceType to_type)
