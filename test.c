@@ -10,15 +10,76 @@
 #include <string.h>
 
 #include "interface.h"
+/*
+int main2()
+{
+	int i=0;
+
+	unsigned char *ECDH_keydata; // shared secret
+	RegisterContext *rc=(RegisterContext *)malloc(sizeof(RegisterContext));;
+	AccessAuthRequ *access_auth_requ_packet=(AccessAuthRequ *)malloc(sizeof(AccessAuthRequ));;
+	AccessAuthResp *access_auth_resp_packet=(AccessAuthResp *)malloc(sizeof(AccessAuthResp));;
+	printf("sizeof(rc->keydata):%d\n",sizeof(rc->keydata));
+	printf("-1\n");
+	memcpy(&rc->keydata, genECDHtemppubkey(), sizeof(rc->keydata));
+	memcpy(&access_auth_requ_packet->asuekeydata, &rc->keydata, sizeof(access_auth_requ_packet->asuekeydata));
+printf("0\n");
+
+	char *keydata;
+	keydata=&access_auth_requ_packet->asuekeydata;
+	printf("keydata %d:\n",sizeof(access_auth_requ_packet->asuekeydata));
+	for(i=0;i<32;i++)
+	{
+		printf("%02x ",(unsigned char)keydata[i]);
+	}printf("\n");
+
+	memcpy(&rc->keydata, genECDHtemppubkey(), sizeof(rc->keydata));
+	memcpy(&access_auth_resp_packet->aekeydata, &rc->keydata, sizeof(access_auth_resp_packet->aekeydata));
+	size_t secretlen=KEY_LEN;
 
 
+	i=0;
+	unsigned char p[32];
+	//p[i++]=0x98; p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;p[i++]=0x98;p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;
+	//p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0xa0;p[i++]=0xbe;p[i++]=0x5f;p[i++]=0x00;
+	//p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0xb8;p[i++]=0x25;p[i++]=0x1c;p[i++]=0x08;
+	//p[i++]=0x01;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;p[i++]=0x00;
+	//p[i++]=0x98; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x98 ; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ;
+	//p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0xa0 ; p[i++]=0xce ; p[i++]=0x5e ; p[i++]=0x00 ;
+	//p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0xda ; p[i++]=0xb4 ; p[i++]=0x09 ;
+	//p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00;
+
+	p[i++]=0x98 ; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x98 ; p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ;
+	p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0xa0 ; p[i++]=0x6e ; p[i++]=0x73 ; p[i++]=0x00 ;
+	p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x4a ; p[i++]=0xa5 ; p[i++]=0x08 ;
+	p[i++]=0x01 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00 ; p[i++]=0x00;
+	printf("i=%d p[i]:\n",i);
+	for(i=0;i<64;i++)
+	{
+		printf("%02x ",p[i]);
+	}printf("\n");
+
+	memcpy(p,&access_auth_requ_packet->asuekeydata,32);
+	printf("i=%d p[i]:\n",i);
+	for(i=0;i<64;i++)
+	{
+		printf("%02x ",p[i]);
+	}printf("\n");
+//memset(p,0,32);
+
+	printf("11111\n");
+	ECDH_keydata = genECDHsharedsecret(&rc->keydata, (EVP_PKEY *)p, &secretlen);
+	printf("22222\n");
+	return 1;
+	}
+*/
 int main()
 {
 
 	RegisterContext *rc_s=(RegisterContext *)malloc(sizeof(RegisterContext));
 	memcpy(rc_s->radius_id,"0",2);
 	memcpy(rc_s->peer_id,"11111",6);
-	memcpy(rc_s->peer_ip,"192.168.171.127",16);
+	memcpy(rc_s->peer_ip,"192.168.17.127",16);
 	memcpy(rc_s->self_id,"2",2);
 	memcpy(rc_s->self_password,"aaa",4);
 	memcpy(rc_s->peer_password,"123456",7);
@@ -43,7 +104,7 @@ int main()
 
 	memcpy(rc_c->radius_id,"0",2);
 	memcpy(rc_c->peer_id,"2",2);
-	memcpy(rc_c->peer_ip,"192.168.171.127",16);
+	memcpy(rc_c->peer_ip,"192.168.17.127",16);
 	memcpy(rc_c->self_id,"11111",6);
 	memcpy(rc_c->self_password,"123456",7);
 	memcpy(rc_c->peer_password,"aaa",4);
@@ -130,7 +191,7 @@ printf("server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/
 	Self_type=IPC;
 	AccessAuthResp *access_auth_resp_packet_c=(AccessAuthResp *)malloc(sizeof(AccessAuthResp));
 	memcpy(access_auth_resp_packet_c,access_auth_resp_packet_s,sizeof(AccessAuthResp));
-	if(HandleWAPIProtocolAccessAuthResp(rc_c,access_auth_requ_packet_c,access_auth_resp_packet_c))
+	if(HandleWAPIProtocolAccessAuthResp(rc_c,access_auth_requ_packet_c,access_auth_resp_packet_c)<1)
 	{
 		printf("HandleWAPIProtocolAccessAuthResp error\n");
 	}

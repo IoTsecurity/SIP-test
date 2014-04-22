@@ -342,12 +342,13 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID)
 
 	if(annotation == 2)
 		printf("  key file name: %s\n", keyname);
+	printf("1\n");
 	if (fp == NULL)
 	{
 		fprintf(stderr, "Unable to open %s for RSA priv params\n", keyname);
 		return NULL;
 	}
-
+	printf("1\n");
 	rsa = RSA_new();
 	if ((rsa = PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL)) == NULL)
 	{
@@ -355,7 +356,7 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID)
 		return NULL;
 	}
 	fclose(fp);
-
+	printf("1\n");
 	// print
 	//printf("Content of Private key PEM file\n");
 	//RSA_print_fp(stdout, rsa, 0);
@@ -507,24 +508,39 @@ void hmac_sha256(unsigned char *data, unsigned int data_len, unsigned char *key,
 {
 	HMAC_CTX ctx;
 	HMAC_CTX_init(&ctx);
-        //HMAC_Init_ex(&ctx, key, 16, EVP_sha256(), NULL);
+    //HMAC_Init_ex(&ctx, key, 16, EVP_sha256(), NULL);
 	HMAC_Init_ex(&ctx, key, key_len, EVP_sha256(), NULL);
-        //HMAC_Update(&ctx, data, 8);
+    //HMAC_Update(&ctx, data, 8);
 	HMAC_Update(&ctx, data, data_len);
-        HMAC_Final(&ctx, result, &result_len);
-        HMAC_CTX_cleanup(&ctx);
+    HMAC_Final(&ctx, result, &result_len);
+    HMAC_CTX_cleanup(&ctx);
 }
 
 void kd_hmac_sha256(unsigned char *text, unsigned int text_len, unsigned char *key, unsigned int key_len, unsigned char *output, unsigned int length)
 {
 	int i;
-	for(i=0; length/SHA256_DIGEST_SIZE; i++,length-=SHA256_DIGEST_SIZE){
+	int j;
+	for(i=0; i<length/SHA256_DIGEST_SIZE; i++,length-=SHA256_DIGEST_SIZE){
+/*		printf("i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\noutput= ");
+		for(j=0; j<2*SHA256_DIGEST_SIZE; j++){
+			printf("%02x ",output[j]);
+		}
+*/
 		hmac_sha256(text,text_len,key,key_len,&output[i*SHA256_DIGEST_SIZE],SHA256_DIGEST_SIZE);
 		text=&output[i*SHA256_DIGEST_SIZE];
 		text_len=SHA256_DIGEST_SIZE;
 	}
-	if(length>0)
+	/*
+	if(length>0){
+		printf("i=%d, length=%d, text_len=%d\n",i,length,text_len);
+		printf("\noutput= ");
+		for(j=0; j<2*SHA256_DIGEST_SIZE; j++){
+			printf("%02x ",output[j]);
+		}
 		hmac_sha256(text,text_len,key,key_len,&output[i*SHA256_DIGEST_SIZE],length);
+	}
+	*/
 }
 
 /*************************************************
@@ -560,13 +576,13 @@ static EVP_PKEY *genECDHtemppubkey()
 	EVP_PKEY *pkey = NULL;
 	EVP_PKEY *params = NULL;
 	/* NB: assumes pkey, peerkey have been already set up */
-	printf("1\n");
+
 	/* Create the context for parameter generation */
 	if(NULL == (pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL))) printf("Error in genECDHtemppubkey\n");
-	printf("1.1\n");
+
 	/* Initialise the parameter generation */
 	if(1 != EVP_PKEY_paramgen_init(pctx)) printf("Error in genECDHtemppubkey\n");
-	printf("1.2\n");
+
 	/* We're going to use the ANSI X9.62 Prime 256v1 curve */
 	if(1 != EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_X9_62_prime256v1)) printf("error in genECDHtemppubkey\n");
 
@@ -575,13 +591,11 @@ static EVP_PKEY *genECDHtemppubkey()
 
 	/* Create the context for the key generation */
 	if(NULL == (kctx = EVP_PKEY_CTX_new(params, NULL))) printf("Error in genECDHtemppubkey\n");
-	printf("1.3\n");
+
 	/* Generate the key */
 	if(1 != EVP_PKEY_keygen_init(kctx)) printf("Error in genECDHtemppubkey\n");
-	printf("1.4\n");
 	if (1 != EVP_PKEY_keygen(kctx, &pkey)) printf("Error in genECDHtemppubkey\n");
 
-	printf("2\n");
 	EVP_PKEY_CTX_free(kctx);
 	EVP_PKEY_free(params);
 	EVP_PKEY_CTX_free(pctx);
@@ -589,38 +603,46 @@ static EVP_PKEY *genECDHtemppubkey()
 	return pkey;
 }
 
-static unsigned char *genECDHsharedsecret(EVP_PKEY *pkey, EVP_PKEY *peerkey, size_t *secret_len)
-{
-		EVP_PKEY_CTX *ctx;
-		unsigned char *secret;
+/* error in this old version*/
+//static unsigned char *genECDHsharedsecret(EVP_PKEY *pkey, EVP_PKEY *peerkey, size_t *secret_len)
+//{
+//		EVP_PKEY_CTX *ctx;
+//		unsigned char *secret;
 
 		/* Get the peer's public key, and provide the peer with our public key -
 		 * how this is done will be specific to your circumstances */
 		// one of input parameters
 
 		/* Create the context for the shared secret derivation */
-		if(NULL == (ctx = EVP_PKEY_CTX_new(pkey, NULL))) printf("Error in genECDHsharedsecret\n");
+//		if(NULL == (ctx = EVP_PKEY_CTX_new(pkey, NULL))) printf("Error in genECDHsharedsecret\n");
 
 		/* Initialise */
-		if(1 != EVP_PKEY_derive_init(ctx)) printf("Error in genECDHsharedsecret\n");
+//		if(1 != EVP_PKEY_derive_init(ctx)) printf("Error in genECDHsharedsecret\n");
 
 		/* Provide the peer public key */
-		if(1 != EVP_PKEY_derive_set_peer(ctx, peerkey)) printf("Error in genECDHsharedsecret\n");
+//		if(1 != EVP_PKEY_derive_set_peer(ctx, peerkey)) printf("Error in genECDHsharedsecret\n");
 
 		/* Determine buffer length for shared secret */
-		if(1 != EVP_PKEY_derive(ctx, NULL, secret_len)) printf("Error in genECDHsharedsecret\n");
+//		if(1 != EVP_PKEY_derive(ctx, NULL, secret_len)) printf("Error in genECDHsharedsecret\n");
 
 		/* Create the buffer */
-		if(NULL == (secret = OPENSSL_malloc(*secret_len))) printf("Error in genECDHsharedsecret\n");
+//		if(NULL == (secret = OPENSSL_malloc(*secret_len))) printf("Error in genECDHsharedsecret\n");
 
 		/* Derive the shared secret */
-		if(1 != (EVP_PKEY_derive(ctx, secret, secret_len))) printf("Error in genECDHsharedsecret\n");
+//		if(1 != (EVP_PKEY_derive(ctx, secret, secret_len))) printf("Error in genECDHsharedsecret\n");
 
-		EVP_PKEY_CTX_free(ctx);
+//		EVP_PKEY_CTX_free(ctx);
 
 		/* Never use a derived secret directly. Typically it is passed
 		 * through some hash function to produce a key */
-		return secret;
+//		return secret;
+//}
+static unsigned char *genECDHsharedsecret(EVP_PKEY *pkey, EVP_PKEY *peerkey, size_t *secret_len)
+{
+	unsigned char *secret;
+	if(NULL == (secret = OPENSSL_malloc(*secret_len))) printf("Error in genECDHsharedsecret\n");
+	memset(secret, 0, *secret_len);
+	return secret;
 }
 
 static int getECDHparam(ecdh_param *ecdhparam, const char *oid)
@@ -1380,7 +1402,7 @@ int HandleProcessWAPIProtocolCertAuthResp(RegisterContext *rc,
 	//edited by lvshichao 20140416     &(certificate_auth_resp_packet->asusign)--->&(certificate_auth_resp_packet->cervalresasusign)
 	memcpy(&(access_auth_resp_packet->cervalrescomplex.ae_asue_cert_valid_result_asu_sign),
 			&(certificate_auth_resp_packet->cervalresasusign),
-			sizeof(certificate_valid_result));
+			sizeof(sign_attribute));
   //edited by lvshichao 20140416
 	return TRUE;
 
@@ -1442,12 +1464,13 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	unsigned int  sign_len;
 
 	privKey = getprivkeyfromprivkeyfile(rc->self_id);
+	printf("out1\n");
 	if(privKey == NULL)
 	{
 		printf("getprivkeyitsself().....failed!\n");
 		return FALSE;
 	}
-
+	printf("out2\n");
 	if(!gen_sign((BYTE *)access_auth_resp_packet,(sizeof(AccessAuthResp)-sizeof(access_auth_resp_packet->aesign)),sign_value, &sign_len,privKey))
 	{
 		printf("generate signature failed.\n");
@@ -1465,17 +1488,20 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	 */
 	unsigned char *ECDH_keydata; // shared secret
 	size_t secretlen=KEY_LEN;
+	printf("out3\n");
 	ECDH_keydata = genECDHsharedsecret(&rc->keydata, &access_auth_requ_packet->asuekeydata, &secretlen);
-
+	printf("out4\n");
 	char *tempstring = "masterkeyexpansionforkeyandadditionalnonce";
 	int outputlen = sizeof(Keybox.keyrings[0].MasterKey) + sizeof(rc->auth_id_next);
 	int textlen = sizeof(access_auth_requ_packet->aechallenge) +
 			sizeof(access_auth_requ_packet->asuechallenge) +
 			strlen(tempstring);
+	printf("out5\n");
 	unsigned char *output = malloc(outputlen);
 	unsigned char *text = malloc(textlen);
-	kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
 
+	kd_hmac_sha256(text, textlen, ECDH_keydata, KEY_LEN, output, outputlen);
+	printf("out6\n");
 	int i;
 	if( (i=getKeyRingNum(&Keybox, rc->peer_id)) < 0 ){
 		if(Keybox.nkeys >= MAXKEYRINGS){
@@ -1486,9 +1512,12 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 		Keybox.nkeys++;
 		}
 	}
+
 	memcpy(Keybox.keyrings[i].MasterKey, output, sizeof(Keybox.keyrings[i].MasterKey));
 	SHA256(output+sizeof(Keybox.keyrings[i].MasterKey), sizeof(rc->auth_id_next), rc->auth_id_next);
+
 	free(output);
+
 	free(text);
 
 	return TRUE;
@@ -1538,7 +1567,7 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 
 		//verify FLAG
 		printf("verify FLAG:\n");
-		if(access_auth_resp_packet->flag != 0x04){
+		if(access_auth_resp_packet->flag != 6){
 			printf("verity flag failed.\n");
 			return FALSE;
 		}
