@@ -31,19 +31,8 @@ int main()
 	memcpy(rc_s->self_password,"aaa",4);
 	memcpy(rc_s->peer_password,"123456",7);
 
-	rc_s->self_MACaddr.macaddr[0]=0x00;
-	rc_s->self_MACaddr.macaddr[1]=0x0c;
-	rc_s->self_MACaddr.macaddr[2]=0x29;
-	rc_s->self_MACaddr.macaddr[3]=0xd4;
-	rc_s->self_MACaddr.macaddr[4]=0x25;
-	rc_s->self_MACaddr.macaddr[5]=0x3e;
-
-	rc_s->peer_MACaddr.macaddr[0]=0x00;
-	rc_s->peer_MACaddr.macaddr[1]=0x0c;
-	rc_s->peer_MACaddr.macaddr[2]=0x29;
-	rc_s->peer_MACaddr.macaddr[3]=0xd4;
-	rc_s->peer_MACaddr.macaddr[4]=0x25;
-	rc_s->peer_MACaddr.macaddr[5]=0x3e;
+	memcpy(rc_s->self_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
+	memcpy(rc_s->peer_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
 
 	Keybox.nkeys=0;
 	KeyboxIPC.nkeys=0;
@@ -59,19 +48,9 @@ int main()
 	memcpy(rc_c->self_password,"123456",7);
 	memcpy(rc_c->peer_password,"aaa",4);
 
-	rc_c->self_MACaddr.macaddr[0]=0x00;
-	rc_c->self_MACaddr.macaddr[1]=0x0c;
-	rc_c->self_MACaddr.macaddr[2]=0x29;
-	rc_c->self_MACaddr.macaddr[3]=0xd4;
-	rc_c->self_MACaddr.macaddr[4]=0x25;
-	rc_c->self_MACaddr.macaddr[5]=0x3e;
+	memcpy(rc_c->self_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
+	memcpy(rc_c->peer_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
 
-	rc_c->peer_MACaddr.macaddr[0]=0x00;
-	rc_c->peer_MACaddr.macaddr[1]=0x0c;
-	rc_c->peer_MACaddr.macaddr[2]=0x29;
-	rc_c->peer_MACaddr.macaddr[3]=0xd4;
-	rc_c->peer_MACaddr.macaddr[4]=0x25;
-	rc_c->peer_MACaddr.macaddr[5]=0x3e;
 	Keybox.nkeys=0;
 
 	printf("start\n");
@@ -116,6 +95,7 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	if(talk_to_asu(certificate_auth_requ_packet_s,certificate_auth_resp_packet_s)<0)
 	{
 		printf("talk_to_asu error \n");
+		return 0;
 		}
 	printf("server   send the Access-Request ( cert auth request packet )----------------finished\n");
 
@@ -127,12 +107,14 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 			certificate_auth_resp_packet_s,access_auth_resp_packet_s)<1)
 	{
 		printf("HandleProcessWAPIProtocolCertAuthResp error\n");
+		return 0;
 	}
 	printf("HandleProcessWAPIProtocolCertAuthResp ---------------------finished\n");
 	if(ProcessWAPIProtocolAccessAuthResp(rc_s,
 			access_auth_requ_packet_s, access_auth_resp_packet_s)<1)
 	{
 		printf("ProcessWAPIProtocolAccessAuthResp error\n");
+		return 0;
 		}
 	printf("server send 200OK/403 Forbidden ( access auth response packet ) SUCCESS/FAILUE------------finished\n");
 
@@ -144,6 +126,7 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	if(HandleWAPIProtocolAccessAuthResp(rc_c,access_auth_requ_packet_c,access_auth_resp_packet_c)<1)
 	{
 		printf("HandleWAPIProtocolAccessAuthResp error\n");
+		return 0;
 	}
 	printf("client handle the access auth response packet------------finished\n");
 
@@ -161,6 +144,7 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	if(ProcessUnicastKeyNegoRequest(rc_s, unicast_key_nego_requ_packet_s)<1)
 	{
 		printf("ProcessUnicastKeyNegoRequest error\n");
+		return 0;
 	}
 
 	printf("2-----in the IPC----\n");
@@ -170,12 +154,14 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	if(HandleUnicastKeyNegoRequest(rc_c, unicast_key_nego_requ_packet_c)<1)
 	{
 		printf("HandleUnicastKeyNegoRequest error\n");
+		return 0;
 	}
 
 	UnicastKeyNegoResp *unicast_key_nego_resp_packet_c=(UnicastKeyNegoResp*)malloc (sizeof(UnicastKeyNegoResp));
 	if(ProcessUnicastKeyNegoResponse(rc_c, unicast_key_nego_resp_packet_c)<1)
 	{
 		printf("ProcessUnicastKeyNegoResponse error\n");
+		return 0;
 	}
 
 	printf("3-----in the server----\n");
@@ -185,12 +171,14 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	if(HandleUnicastKeyNegoResponse(rc_s,unicast_key_nego_resp_packet_s)<1)
 	{
 		printf("HandleUnicastKeyNegoResponse error\n");
+		return 0;
 	}
 
 	UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet_s=(UnicastKeyNegoConfirm*)malloc (sizeof(UnicastKeyNegoConfirm));
 	if(ProcessUnicastKeyNegoConfirm(rc_s,unicast_key_nego_confirm_packet_s)<1)
 	{
 		printf("ProcessUnicastKeyNegoConfirm error\n");
+		return 0;
 	}
 
 	printf("4-----in the IPC----\n");
@@ -200,6 +188,7 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 	if(HandleUnicastKeyNegoConfirm(rc_c,unicast_key_nego_confirm_packet_c)<1)
 	{
 		printf("HandleUnicastKeyNegoConfirm error\n");
+		return 0;
 	}
 	printf("----------------------------nego finished---------------------------------\n");
 
@@ -207,16 +196,343 @@ decodeFromChar(access_auth_requ_packet_c,sizeof(AccessAuthRequ)*2);
 
 	printf("----------------------------distribute begin---------------------------------\n");
 
-	int ProcessP2PKeyDistribution(P2PLinkContext *lc, P2PKeyDistribution *p2p_key_dist_packet);
+	printf("1-----in the SIPserver----\n");
+	changeTo(IPC,SIPserver);
+	Keybox.nkeys++;
+	memcpy(Keybox.keyrings[Keybox.nkeys-1].partner_id,"user2",MAXIDSTRING);
+	memset(Keybox.keyrings[Keybox.nkeys-1].CK,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].IK,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].KEK,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].MasterKey,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].reauth_IK,1,KEY_LEN);
 
-	// step21+
-	int HandleP2PKeyDistribution(P2PLinkContext *lc, const P2PKeyDistribution *p2p_key_dist_packet);
+	RegisterContext *rc_s2NVR=(RegisterContext *)malloc(sizeof(RegisterContext));
 
+	memcpy(rc_s2NVR->peer_id,"user2",6);
+	memcpy(rc_s2NVR->peer_ip,"192.168.17.127",16);
+	memcpy(rc_s2NVR->self_id,"2",2);
+
+	memcpy(rc_s2NVR->self_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
+	memcpy(rc_s2NVR->peer_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
+
+	P2PLinkContext *lc_to_IPC=(P2PLinkContext *)malloc(sizeof(P2PLinkContext));
+	P2PLinkContext *lc_to_NVR=(P2PLinkContext *)malloc(sizeof(P2PLinkContext));
+	P2PLinkContext_Conversion_S(rc_s, rc_s2NVR, lc_to_IPC, lc_to_NVR);
+
+	printf("ProcessP2PKeyDistribution for NVR\n");
+	P2PKeyDistribution *p2p_key_dist_packet_to_NVR=(P2PKeyDistribution *)malloc(sizeof(P2PKeyDistribution));;
+	if(ProcessP2PKeyDistribution(lc_to_NVR, p2p_key_dist_packet_to_NVR)<1)
+	{
+		printf("ProcessP2PKeyDistribution error\n");
+		return 0;
+	}
+
+	printf("ProcessP2PKeyDistribution for IPC\n");
+	P2PKeyDistribution *p2p_key_dist_packet_to_IPC=(P2PKeyDistribution *)malloc(sizeof(P2PKeyDistribution));
+	if(ProcessP2PKeyDistribution(lc_to_IPC, p2p_key_dist_packet_to_IPC)<1)
+	{
+		printf("ProcessP2PKeyDistribution error\n");
+		return 0;
+	}
+
+	printf("2-----in the IPC----\n");
+	changeTo(SIPserver,IPC);
+	P2PLinkContext *lc_in_IPC=(P2PLinkContext *)malloc(sizeof(P2PLinkContext));
+	P2PLinkContext_Conversion_C(rc_c, lc_in_IPC,NVR);
+
+	P2PKeyDistribution *p2p_key_dist_packet_in_IPC=(P2PKeyDistribution *)malloc(sizeof(P2PKeyDistribution));
+	memcpy(p2p_key_dist_packet_in_IPC, p2p_key_dist_packet_to_IPC, sizeof(P2PKeyDistribution));
+	if(HandleP2PKeyDistribution(lc_in_IPC, p2p_key_dist_packet_in_IPC)<1)
+	{
+		printf("HandleP2PKeyDistribution error\n");
+		return 0;
+	}
+
+
+	printf("3-----in the NVR----\n");
+	changeTo(IPC,NVR);
+	Keybox.nkeys++;
+	memcpy(Keybox.keyrings[Keybox.nkeys-1].partner_id,"2",MAXIDSTRING);
+	memset(Keybox.keyrings[Keybox.nkeys-1].CK,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].IK,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].KEK,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].MasterKey,1,KEY_LEN);
+	memset(Keybox.keyrings[Keybox.nkeys-1].reauth_IK,1,KEY_LEN);
+
+	RegisterContext *rc_c_in_NVR=(RegisterContext *)malloc(sizeof(RegisterContext));
+
+	memcpy(rc_c_in_NVR->peer_id,"2",6);
+	memcpy(rc_c_in_NVR->peer_ip,"192.168.17.127",16);
+	memcpy(rc_c_in_NVR->self_id,"user2",6);
+
+	memcpy(rc_c_in_NVR->self_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
+	memcpy(rc_c_in_NVR->peer_MACaddr.macaddr,"\x00\x0c\x29\xd4\x25\x3e",6);
+
+	P2PLinkContext *lc_in_NVR=(P2PLinkContext *)malloc(sizeof(P2PLinkContext));
+	P2PLinkContext_Conversion_C(rc_c_in_NVR, lc_in_NVR, IPC);
+
+	P2PKeyDistribution *p2p_key_dist_packet_in_NVR=(P2PKeyDistribution *)malloc(sizeof(P2PKeyDistribution));
+	memcpy(p2p_key_dist_packet_in_NVR, p2p_key_dist_packet_to_NVR, sizeof(P2PKeyDistribution));
+	if(HandleP2PKeyDistribution(lc_in_NVR, p2p_key_dist_packet_in_NVR)<1)
+	{
+		printf("HandleP2PKeyDistribution error\n");
+	}
 
 	printf("----------------------------distribute finished---------------------------------\n");
 
+	printf("----------------------------p2p communicate begin---------------------------------\n");
+	printf("-------------------p2p authentication token begin--------------------\n");
+	printf("1-----in the IPC----\n");
+	changeTo(NVR,IPC);
 
+	P2PCommContext *cc_in_IPC=(P2PCommContext *)malloc(sizeof(P2PCommContext));memset(cc_in_IPC,0,sizeof(P2PCommContext));
+	P2PCommContext_Conversion(lc_in_IPC, cc_in_IPC);
+
+	P2PAuthToken *p2p_auth_token_in_IPC=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PAuthToken(cc_in_IPC, p2p_auth_token_in_IPC)<1)
+	{
+		printf("ProcessP2PAuthToken error\n");
+		return 0;
+	}
+
+	printf("2-----in the NVR----\n");
+	changeTo(IPC,NVR);
+	P2PCommContext *cc_in_NVR=(P2PCommContext *)malloc(sizeof(P2PCommContext));memset(cc_in_NVR,0,sizeof(P2PCommContext));
+	P2PCommContext_Conversion(lc_in_NVR, cc_in_NVR);
+
+	P2PAuthToken *p2p_auth_token_in_NVR2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PAuthToken(cc_in_NVR, p2p_auth_token_in_NVR2)<1)
+	{
+		printf("ProcessP2PAuthToken error\n");
+		return 0;
+	}
+	P2PAuthToken *p2p_auth_token_in_NVR=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_auth_token_in_NVR,p2p_auth_token_in_IPC,sizeof(P2PAuthToken));
+	if(HandleP2PAuthToken(cc_in_NVR, p2p_auth_token_in_NVR)<1)
+	{
+		printf("ProcessP2PAuthToken error\n");
+		return 0;
+	}
+
+	printf("3-----in the IPC----\n");
+	changeTo(NVR, IPC);
+	P2PAuthToken *p2p_auth_token_in_IPC2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_auth_token_in_IPC2,p2p_auth_token_in_NVR2,sizeof(P2PAuthToken));
+	if(HandleP2PAuthToken(cc_in_IPC, p2p_auth_token_in_IPC2)<1)
+	{
+		printf("ProcessP2PAuthToken error\n");
+		return 0;
+	}
+	printf("-------------------p2p authentication token finished--------------------\n");
+
+
+	printf("-------------------p2p reauthentication token begin--------------------\n");
+	printf("1-----in the IPC----\n");
+	//changeTo(NVR,IPC);
+
+	P2PAuthToken *p2p_reauth_token_IPC1=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PReauthToken(cc_in_IPC, p2p_reauth_token_IPC1)<1)
+	{
+		printf("ProcessP2PReauthToken error\n");
+		return 0;
+	}
+
+	printf("2-----in the NVR----\n");
+	changeTo(IPC,NVR);
+
+	P2PAuthToken *p2p_reauth_token_NVR2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PReauthToken(cc_in_NVR, p2p_reauth_token_NVR2)<1)
+	{
+		printf("ProcessP2PReauthToken error\n");
+		return 0;
+	}
+
+	P2PAuthToken *p2p_reauth_token_NVR1=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_reauth_token_NVR1,p2p_reauth_token_IPC1,sizeof(P2PAuthToken));
+	if(HandleP2PReauthToken(cc_in_NVR, p2p_reauth_token_NVR1)<1)
+	{
+		printf("HandleP2PReauthToken error\n");
+		return 0;
+	}
+
+	printf("3-----in the IPC----\n");
+	changeTo(NVR, IPC);
+	P2PAuthToken *p2p_reauth_token_IPC2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_reauth_token_IPC2,p2p_reauth_token_NVR2,sizeof(P2PAuthToken));
+	if(HandleP2PReauthToken(cc_in_IPC, p2p_reauth_token_IPC2)<1)
+	{
+		printf("ProcessP2PAuthToken error\n");
+		return 0;
+	}
+	printf("-------------------p2p reauthentication token finished--------------------\n");
+
+
+
+	printf("-------------------p2p ByeSession begin--------------------\n");
+	printf("1-----in the IPC----\n");
+	//changeTo(NVR,IPC);
+
+	P2PAuthToken *p2p_bye_session_token_IPC1=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PByeSessionToken(cc_in_IPC, p2p_bye_session_token_IPC1)<1)
+	{
+		printf("ProcessP2PByeSessionToken error\n");
+		return 0;
+	}
+
+	printf("2-----in the NVR----\n");
+	changeTo(IPC,NVR);
+
+	P2PAuthToken *p2p_bye_session_token_NVR1=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PByeSessionToken(cc_in_NVR, p2p_bye_session_token_NVR1)<1)
+	{
+		printf("ProcessP2PByeSessionToken error\n");
+		return 0;
+	}
+
+	P2PAuthToken *p2p_bye_session_token_NVR2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_bye_session_token_NVR2,p2p_bye_session_token_IPC1,sizeof(P2PAuthToken));
+	if(HandleP2PByeSessionToken(cc_in_NVR, p2p_bye_session_token_NVR2)<1)
+	{
+		printf("HandleP2PByeSessionToken error\n");
+		return 0;
+	}
+
+	printf("3-----in the IPC----\n");
+	changeTo(NVR, IPC);
+	P2PAuthToken *p2p_bye_session_token_IPC2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_bye_session_token_IPC2,p2p_bye_session_token_NVR1,sizeof(P2PAuthToken));
+	if(HandleP2PByeSessionToken(cc_in_IPC, p2p_bye_session_token_IPC2)<1)
+	{
+		printf("HandleP2PByeSessionToken error\n");
+		return 0;
+	}
+	printf("-------------------p2p ByeSession finished--------------------\n");
+
+
+
+
+	printf("-------------------p2p ByeLink begin--------------------\n");
+	printf("1-----in the IPC----\n");
+	//changeTo(NVR,IPC);
+
+	P2PAuthToken *p2p_bye_link_token_IPC1=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PByeLinkToken(cc_in_IPC, p2p_bye_link_token_IPC1)<1)
+	{
+		printf("ProcessP2PByeLinkToken error\n");
+		return 0;
+	}
+
+	printf("2-----in the NVR----\n");
+	changeTo(IPC,NVR);
+
+	P2PAuthToken *p2p_bye_link_token_NVR1=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	if(ProcessP2PByeLinkToken(cc_in_NVR, p2p_bye_link_token_NVR1)<1)
+	{
+		printf("ProcessP2PByeLinkToken error\n");
+		return 0;
+	}
+
+	P2PAuthToken *p2p_bye_link_token_NVR2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_bye_link_token_NVR2,p2p_bye_link_token_IPC1,sizeof(P2PAuthToken));
+	if(HandleP2PByeLinkToken(cc_in_NVR, p2p_bye_link_token_NVR2)<1)
+	{
+		printf("HandleP2PByeLinkToken error\n");
+		return 0;
+	}
+
+	printf("3-----in the IPC----\n");
+	changeTo(NVR, IPC);
+	P2PAuthToken *p2p_bye_link_token_IPC2=(P2PAuthToken *)malloc(sizeof(P2PAuthToken));
+	memcpy(p2p_bye_link_token_IPC2,p2p_bye_link_token_NVR1,sizeof(P2PAuthToken));
+	if(HandleP2PByeLinkToken(cc_in_IPC, p2p_bye_link_token_IPC2)<1)
+	{
+		printf("HandleP2PByeLinkToken error\n");
+		return 0;
+	}
+	printf("-------------------p2p ByeLink finished--------------------\n");
+
+
+	// step29a/29b: IPC - NVR / NVR - IPC
+	//int ProcessP2PByeLinkToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_link_token);
+	// step30: IPC/NVR
+	//int HandleP2PByeLinkToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_link_token);
+
+	printf("----------------------------p2p communicate finished---------------------------------\n");
+
+return 1;
 }
+
+int P2PCommContext_Conversion(P2PLinkContext *lc,P2PCommContext *cc)
+{
+	memcpy(cc->self_id,lc->self_id,MAXIDSTRING);
+	memcpy(&cc->self_MACaddr,&lc->self_MACaddr,sizeof(cc->self_MACaddr));
+
+	memcpy(cc->peer_id,lc->target_id,MAXIDSTRING);
+	cc->peer_type=lc->target_type;
+	memcpy(&cc->peer_MACaddr,&lc->target_MACaddr,sizeof(cc->peer_MACaddr));
+
+	return 1;
+}
+
+int P2PLinkContext_Conversion_C(RegisterContext *rc, P2PLinkContext *lc, enum DeviceType target_type)
+{
+	memcpy(lc->self_id,rc->self_id,MAXIDSTRING);
+	memcpy(lc->self_MACaddr.macaddr,rc->self_MACaddr.macaddr,sizeof(lc->self_MACaddr.macaddr));
+
+	memcpy(lc->peer_id,rc->peer_id,MAXIDSTRING);
+	lc->peer_type=SIPserver;
+	memcpy(lc->peer_MACaddr.macaddr,rc->peer_MACaddr.macaddr,sizeof(lc->peer_MACaddr.macaddr));
+	memcpy(lc->peer_ip,rc->peer_ip,MAXIDSTRING);
+
+	lc->target_ports.rtp_send=0;
+	lc->target_ports.rtcp_send=0;
+	lc->target_ports.rtp_recv=0;
+	lc->target_ports.rtcp_recv=0;
+
+	lc->target_type=target_type;
+
+	return 1;
+	}
+
+int P2PLinkContext_Conversion_S(RegisterContext *rc_IPC, RegisterContext *rc_NVR, P2PLinkContext *lc_to_IPC, P2PLinkContext *lc_to_NVR)
+{
+	memcpy(lc_to_IPC->self_id,rc_IPC->self_id,MAXIDSTRING);
+	memcpy(lc_to_IPC->self_MACaddr.macaddr,rc_IPC->self_MACaddr.macaddr,sizeof(lc_to_IPC->self_MACaddr.macaddr));
+
+	memcpy(lc_to_IPC->peer_id,rc_IPC->peer_id,MAXIDSTRING);
+	lc_to_IPC->peer_type=IPC;
+	memcpy(lc_to_IPC->peer_MACaddr.macaddr,rc_IPC->peer_MACaddr.macaddr,sizeof(lc_to_IPC->peer_MACaddr.macaddr));
+	memcpy(lc_to_IPC->peer_ip,rc_IPC->peer_ip,MAXIDSTRING);
+
+	memcpy(lc_to_IPC->target_id,rc_NVR->peer_id,MAXIDSTRING);
+	lc_to_IPC->target_type=NVR;
+	memcpy(lc_to_IPC->target_MACaddr.macaddr,rc_NVR->peer_MACaddr.macaddr,sizeof(lc_to_IPC->target_MACaddr.macaddr));
+	memcpy(lc_to_IPC->target_ip,rc_NVR->peer_ip,MAXIDSTRING);
+	lc_to_IPC->target_ports.rtp_send=0;
+	lc_to_IPC->target_ports.rtcp_send=0;
+	lc_to_IPC->target_ports.rtp_recv=0;
+	lc_to_IPC->target_ports.rtcp_recv=0;
+
+	memcpy(lc_to_NVR->self_id,rc_NVR->self_id,MAXIDSTRING);
+	memcpy(lc_to_NVR->self_MACaddr.macaddr,rc_NVR->self_MACaddr.macaddr,sizeof(lc_to_NVR->self_MACaddr.macaddr));
+
+	memcpy(lc_to_NVR->peer_id,rc_NVR->peer_id,MAXIDSTRING);
+	lc_to_NVR->peer_type=NVR;
+	memcpy(lc_to_NVR->peer_MACaddr.macaddr,rc_NVR->peer_MACaddr.macaddr,sizeof(lc_to_NVR->peer_MACaddr.macaddr));
+	memcpy(lc_to_NVR->peer_ip,rc_NVR->peer_ip,MAXIDSTRING);
+
+	memcpy(lc_to_NVR->target_id,rc_IPC->peer_id,MAXIDSTRING);
+	lc_to_NVR->target_type=IPC;
+	memcpy(lc_to_NVR->target_MACaddr.macaddr,rc_IPC->peer_MACaddr.macaddr,sizeof(lc_to_NVR->target_MACaddr.macaddr));
+	memcpy(lc_to_NVR->target_ip,rc_IPC->peer_ip,MAXIDSTRING);
+
+	lc_to_NVR->target_ports.rtp_send=0;
+	lc_to_NVR->target_ports.rtcp_send=0;
+	lc_to_NVR->target_ports.rtp_recv=0;
+	lc_to_NVR->target_ports.rtcp_recv=0;
+
+	return 1;
+	}
 
 int changeTo(enum DeviceType from_type,enum DeviceType to_type)
 {
