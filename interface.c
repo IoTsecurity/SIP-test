@@ -1502,6 +1502,7 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 	//disp("Keybox.keyrings[i].MasterKey", Keybox.keyrings[i].MasterKey, sizeof(Keybox.keyrings[i].MasterKey));
 	//disp("rc->auth_id_next", rc->auth_id_next, sizeof(rc->auth_id_next));
 
+	free(ECDH_keydata);
 	free(output);
 	free(text);
 
@@ -1673,6 +1674,7 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 		//disp("Keybox.keyrings[i].MasterKey", Keybox.keyrings[i].MasterKey, sizeof(Keybox.keyrings[i].MasterKey));
 		//disp("rc->auth_id_next", rc->auth_id_next, sizeof(rc->auth_id_next));
 
+		free(ECDH_keydata);
 		free(output);
 		free(text);
 
