@@ -149,7 +149,7 @@ static int getKeyRingNum(const KeyBox *keybox, const char *id)
 	return -1;
 }
 
-static int getSecureLinkNum(const SecureLinks *securelinks, const char *id)
+int getSecureLinkNum(const SecureLinks *securelinks, const char *id)
 {
 	int i;
 	for(i=0; i < securelinks->nlinks; i++){
@@ -160,10 +160,17 @@ static int getSecureLinkNum(const SecureLinks *securelinks, const char *id)
 	return -1;
 }
 
-static void disp(void * pbuf,int size)
-{ int i=0;
-	for( i=0;i<size;i++)
-		printf("%02x ",*((unsigned char *)pbuf+i));
+static void disp(const char *str, const void *pbuf, const int size)
+{
+	int i=0;
+	if(str != NULL){
+		printf("%s:\n", str);
+	}
+	if(pbuf != NULL && size > 0){
+		for(i=0;i<size;i++)
+			printf("%02x ", *((unsigned char *)pbuf+i));
+		putchar('\n');
+	}
 	putchar('\n');
 }
 
@@ -896,6 +903,8 @@ void user_gen_cert_request(char *user_ID,char *username)
 // step2: SIP Server - SIP UA(NVR)
 int ProcessWAPIProtocolAuthActive(RegisterContext *rc, AuthActive *auth_active_packet)
 {
+	printf("\n[step2: SIP Server - SIP UA(NVR)] In ProcessWAPIProtocolAuthActive:\n");
+
 	//fill flag
 	if(annotation == 2)
 		printf("fill flag:\n");
@@ -988,6 +997,8 @@ int ProcessWAPIProtocolAuthActive(RegisterContext *rc, AuthActive *auth_active_p
 // step3: SIP UA(NVR) - SIP Server
 int HandleWAPIProtocolAuthActive(RegisterContext *rc, AuthActive *auth_active_packet)
 {
+	printf("\n[step3: SIP UA(NVR)] In HandleWAPIProtocolAuthActive:\n");
+
 	//write ae cert into cert file
 	printf("write ae cert into cert file:\n");
 	char *ae_ID = rc->peer_id;
@@ -1064,6 +1075,8 @@ int HandleWAPIProtocolAuthActive(RegisterContext *rc, AuthActive *auth_active_pa
 int ProcessWAPIProtocolAccessAuthRequest(RegisterContext *rc, AuthActive *auth_active_packet,
 		AccessAuthRequ *access_auth_requ_packet)
 {
+		printf("\n[step3: SIP UA(NVR) - SIP Server] In HandleWAPIProtocolAccessAuthRequest:\n");
+
 		//fill flag
 		printf("fill flag:\n");
 		access_auth_requ_packet->flag = 3; // step3
@@ -1145,6 +1158,8 @@ int ProcessWAPIProtocolAccessAuthRequest(RegisterContext *rc, AuthActive *auth_a
 int HandleWAPIProtocolAccessAuthRequest(RegisterContext *rc, AuthActive *auth_active_packet,
 		AccessAuthRequ *access_auth_requ_packet)
 {
+	printf("\n[step4: SIP Server] In HandleWAPIProtocolAccessAuthRequest:\n");
+
 	//write asue cert into cert file
 	if(annotation == 2)
 		printf("write asue cert into cert file:\n");
@@ -1221,6 +1236,8 @@ int HandleWAPIProtocolAccessAuthRequest(RegisterContext *rc, AuthActive *auth_ac
 int ProcessWAPIProtocolCertAuthRequest(RegisterContext *rc,
 		AccessAuthRequ *access_auth_requ_packet, CertificateAuthRequ *certificate_auth_requ_packet)
 {
+	printf("\n[step4: SIP Server - Radius Server] In ProcessWAPIProtocolCertAuthRequest:\n");
+
 	//fill addid
 	memcpy((BYTE *)&(certificate_auth_requ_packet->addid.mac1),rc->peer_MACaddr.macaddr,sizeof(certificate_auth_requ_packet->addid.mac1));
 	memcpy((BYTE *)&(certificate_auth_requ_packet->addid.mac2),rc->self_MACaddr.macaddr,sizeof(certificate_auth_requ_packet->addid.mac2));
@@ -1293,6 +1310,7 @@ int HandleProcessWAPIProtocolCertAuthResp(RegisterContext *rc,
 		CertificateAuthResp *certificate_auth_resp_packet,
 		AccessAuthResp *access_auth_resp_packet)
 {
+	printf("\n[step6: SIP Server] In HandleProcessWAPIProtocolCertAuthResp:\n");
 	memset((BYTE *)access_auth_resp_packet, 0, sizeof(AccessAuthResp));
 
 	//读取CA(驻留在ASU)中的公钥证书获取CA公钥
@@ -1374,6 +1392,8 @@ int HandleProcessWAPIProtocolCertAuthResp(RegisterContext *rc,
 int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 		AccessAuthRequ *access_auth_requ_packet, AccessAuthResp *access_auth_resp_packet)
 {
+	printf("\n[step6: SIP Server - SIP UA(NVR)] In ProcessWAPIProtocolAccessAuthResp:\n");
+
 	//fill flag, same as access auth requ packet
 	if(annotation == 2)
 		printf("fill flag:\n");
@@ -1475,9 +1495,14 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 		}
 	}
 
+	/* checkpoint */
+	//disp("ECDH_keydata", ECDH_keydata, secretlen);
 	memcpy(Keybox.keyrings[i].MasterKey, output, sizeof(Keybox.keyrings[i].MasterKey));
 	SHA256(output+sizeof(Keybox.keyrings[i].MasterKey), sizeof(rc->auth_id_next), rc->auth_id_next);
+	//disp("Keybox.keyrings[i].MasterKey", Keybox.keyrings[i].MasterKey, sizeof(Keybox.keyrings[i].MasterKey));
+	//disp("rc->auth_id_next", rc->auth_id_next, sizeof(rc->auth_id_next));
 
+	free(ECDH_keydata);
 	free(output);
 	free(text);
 
@@ -1488,6 +1513,8 @@ int ProcessWAPIProtocolAccessAuthResp(RegisterContext *rc,
 int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access_auth_requ_packet,
 		AccessAuthResp *access_auth_resp_packet)
 {
+		printf("\n[step6+: SIP UA(NVR)] In HandleWAPIProtocolAccessAuthResp:\n");
+
 		//verify sign of AE
 		printf("verify sign of AE:\n");
 		//read ae certificate get ae pubkey(公钥)
@@ -1640,8 +1667,14 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 			}
 		}
 
+		/* checkpoint */
+		//disp("ECDH_keydata", ECDH_keydata, secretlen);
 		memcpy(Keybox.keyrings[i].MasterKey, output, sizeof(Keybox.keyrings[i].MasterKey));
 		SHA256(output+sizeof(Keybox.keyrings[i].MasterKey), sizeof(rc->auth_id_next), rc->auth_id_next);
+		//disp("Keybox.keyrings[i].MasterKey", Keybox.keyrings[i].MasterKey, sizeof(Keybox.keyrings[i].MasterKey));
+		//disp("rc->auth_id_next", rc->auth_id_next, sizeof(rc->auth_id_next));
+
+		free(ECDH_keydata);
 		free(output);
 		free(text);
 
@@ -1656,7 +1689,7 @@ int HandleWAPIProtocolAccessAuthResp(RegisterContext *rc, AccessAuthRequ *access
 // Unicast key negotiation request
 int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicast_key_nego_requ_packet)
 {
-	printf("In ProcessUnicastKeyNegoRequest:\n");
+	printf("\n[step7: SIP Server - SIP UA(NVR)] In ProcessUnicastKeyNegoRequest:\n");
 
 	// fill flag
 	unicast_key_nego_requ_packet->flag = 7; // step7
@@ -1706,7 +1739,7 @@ int ProcessUnicastKeyNegoRequest(RegisterContext *rc, UnicastKeyNegoRequ *unicas
 // Unicast key negotiation response
 int HandleUnicastKeyNegoRequest(RegisterContext *rc, const UnicastKeyNegoRequ *unicast_key_nego_requ_packet)
 {
-	printf("In HandleUnicastKeyNegoRequest:\n");
+	printf("\n[step8: SIP UA(NVR)] In HandleUnicastKeyNegoRequest:\n");
 
 		//verify sign of AE
 		//read ae certificate get ae pubkey(公钥)
@@ -1757,7 +1790,7 @@ int HandleUnicastKeyNegoRequest(RegisterContext *rc, const UnicastKeyNegoRequ *u
 
 int ProcessUnicastKeyNegoResponse(RegisterContext *rc, UnicastKeyNegoResp *unicast_key_nego_resp_packet)
 {
-	printf("In ProcessUnicastKeyNegoResponse:\n");
+	printf("\n[step8: SIP UA(NVR) - SIP Server] In ProcessUnicastKeyNegoResponse:\n");
 
 	// fill flag
 	unicast_key_nego_resp_packet->flag = 8; // step8
@@ -1800,6 +1833,7 @@ int ProcessUnicastKeyNegoResponse(RegisterContext *rc, UnicastKeyNegoResp *unica
 			KEY_LEN, output, outputlen);
 
 	if( (i=getKeyRingNum(&Keybox, rc->peer_id)) < 0 ){
+		// No such key ring, create one
 		if(Keybox.nkeys >= MAXKEYRINGS-1){
 			printf("Key rings is full!\n");
 			return FALSE;
@@ -1810,6 +1844,8 @@ int ProcessUnicastKeyNegoResponse(RegisterContext *rc, UnicastKeyNegoResp *unica
 		}
 	}
 
+	/* checkpoint */
+	//disp("keyblock", output, outputlen);
 	memcpy(Keybox.keyrings[i].CK, output, KEY_LEN);
 	memcpy(Keybox.keyrings[i].IK, output+KEY_LEN, KEY_LEN);
 	memcpy(Keybox.keyrings[i].KEK, output+2*KEY_LEN, KEY_LEN);
@@ -1860,7 +1896,7 @@ int ProcessUnicastKeyNegoResponse(RegisterContext *rc, UnicastKeyNegoResp *unica
 // Unicast key negotiation confirm
 int HandleUnicastKeyNegoResponse(RegisterContext *rc, const UnicastKeyNegoResp *unicast_key_nego_resp_packet)
 {
-	printf("In HandleUnicastKeyNegoResponse:\n");
+	printf("\n[step9: SIP Server] In HandleUnicastKeyNegoResponse:\n");
 
 	// verify master key id
 	/* MK_ID = HMAC-SHA256(MasterKey, MAC_SIPUA || MAC_SIPServer) */
@@ -1896,6 +1932,7 @@ int HandleUnicastKeyNegoResponse(RegisterContext *rc, const UnicastKeyNegoResp *
 			KEY_LEN, output, outputlen);
 
 	if( (i=getKeyRingNum(&Keybox, rc->peer_id)) < 0 ){
+		// No such key ring, create one
 		if(Keybox.nkeys >= MAXKEYRINGS-1){
 			printf("Key rings is full!\n");
 			return FALSE;
@@ -1906,6 +1943,8 @@ int HandleUnicastKeyNegoResponse(RegisterContext *rc, const UnicastKeyNegoResp *
 		}
 	}
 
+	/* checkpoint */
+	//disp("keyblock", output, outputlen);
 	memcpy(Keybox.keyrings[i].CK, output, KEY_LEN);
 	memcpy(Keybox.keyrings[i].IK, output+KEY_LEN, KEY_LEN);
 	memcpy(Keybox.keyrings[i].KEK, output+2*KEY_LEN, KEY_LEN);
@@ -1942,7 +1981,7 @@ int HandleUnicastKeyNegoResponse(RegisterContext *rc, const UnicastKeyNegoResp *
 
 int ProcessUnicastKeyNegoConfirm(RegisterContext *rc, UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet)
 {
-	printf("In ProcessUnicastKeyNegoConfirm:\n");
+	printf("\n[step9: SIP Server - SIP UA(NVR)] In ProcessUnicastKeyNegoConfirm:\n");
 
 	// fill flag
 	unicast_key_nego_confirm_packet->flag = 9; // step9
@@ -1973,10 +2012,10 @@ int ProcessUnicastKeyNegoConfirm(RegisterContext *rc, UnicastKeyNegoConfirm *uni
 	return TRUE;
 }
 
-// step9+: SIP UA(NVR) - SIP Server
+// step9+: SIP UA(NVR)
 int HandleUnicastKeyNegoConfirm(RegisterContext *rc, const UnicastKeyNegoConfirm *unicast_key_nego_confirm_packet)
 {
-	printf("In ProcessUnicastKeyNegoConfirm:\n");
+	printf("\n[step9+: SIP UA(NVR)] In ProcessUnicastKeyNegoConfirm:\n");
 
 	// verify digest
 	int i;
@@ -2009,7 +2048,7 @@ int HandleUnicastKeyNegoConfirm(RegisterContext *rc, const UnicastKeyNegoConfirm
 // step21/22: SIP Server - SIP UA(IPC/NVR)
 int ProcessP2PKeyDistribution(P2PLinkContext *lc, P2PKeyDistribution *p2p_key_dist_packet)
 {
-	printf("In ProcessP2PKeyDistribution:\n");
+	printf("\n[step21/22: SIP Server - SIP UA(IPC/NVR)] In ProcessP2PKeyDistribution:\n");
 
 	// fill flag
 	if(lc->peer_type == IPC){
@@ -2194,7 +2233,7 @@ int ProcessP2PKeyDistribution(P2PLinkContext *lc, P2PKeyDistribution *p2p_key_di
 // step21+/22+: SIP UA(IPC/NVR)
 int HandleP2PKeyDistribution(P2PLinkContext *lc, const P2PKeyDistribution *p2p_key_dist_packet)
 {
-	printf("In HandleP2PKeyDistribution:\n");
+	printf("\n[step21+/22+: SIP UA(IPC/NVR)] In HandleP2PKeyDistribution:\n");
 
 	// verify digest
 	int i;
@@ -2280,7 +2319,7 @@ int HandleP2PKeyDistribution(P2PLinkContext *lc, const P2PKeyDistribution *p2p_k
 // step23a/23b: IPC - NVR / NVR - IPC
 int ProcessP2PAuthToken(P2PCommContext *cc, P2PAuthToken *p2p_auth_token)
 {
-	printf("In ProcessP2PAuthToken:\n");
+	printf("\n[step23a/23b: IPC - NVR / NVR - IPC] In ProcessP2PAuthToken:\n");
 
 	// fill flag
 	p2p_auth_token->flag = 23;
@@ -2324,7 +2363,7 @@ int ProcessP2PAuthToken(P2PCommContext *cc, P2PAuthToken *p2p_auth_token)
 // step24: IPC/NVR
 int HandleP2PAuthToken(P2PCommContext *cc, P2PAuthToken *p2p_auth_token)
 {
-	printf("In HandleP2PAuthToken:\n");
+	printf("\n[step24: IPC/NVR] In HandleP2PAuthToken:\n");
 
 	// verify digest
 	int i;
@@ -2397,7 +2436,7 @@ int HandleP2PAuthToken(P2PCommContext *cc, P2PAuthToken *p2p_auth_token)
 // step25a/25b: IPC - NVR / NVR - IPC
 int ProcessP2PReauthToken(P2PCommContext *cc, P2PAuthToken *p2p_reauth_token)
 {
-	printf("In ProcessP2PReauthToken:\n");
+	printf("\n[step25a/25b: IPC - NVR / NVR - IPC] In ProcessP2PReauthToken:\n");
 
 	// fill flag
 	p2p_reauth_token->flag = 25;
@@ -2442,7 +2481,7 @@ int ProcessP2PReauthToken(P2PCommContext *cc, P2PAuthToken *p2p_reauth_token)
 // step26: IPC/NVR
 int HandleP2PReauthToken(P2PCommContext *cc, P2PAuthToken *p2p_reauth_token)
 {
-	printf("In HandleP2PReauthToken:\n");
+	printf("\n[step26: IPC/NVR] In HandleP2PReauthToken:\n");
 
 	// verify digest
 	int i;
@@ -2465,6 +2504,9 @@ int HandleP2PReauthToken(P2PCommContext *cc, P2PAuthToken *p2p_reauth_token)
 		printf("IK_ID verified failed!\n");
 		return FALSE;
 	}
+
+	// get randnum
+	memcpy(cc->peer_randnum, p2p_reauth_token->randnum, RAND_LEN);
 
 	// compute reauth_IK_IPC_NVRnew
 	/*
@@ -2536,7 +2578,7 @@ int HandleP2PReauthToken(P2PCommContext *cc, P2PAuthToken *p2p_reauth_token)
 // step27a/27b: IPC - NVR / NVR - IPC
 int ProcessP2PByeSessionToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_session_token)
 {
-	printf("In ProcessP2PByeSessionToken:\n");
+	printf("\n[step27a/27b: IPC - NVR / NVR - IPC] In ProcessP2PByeSessionToken:\n");
 
 	// fill flag
 	p2p_bye_session_token->flag = 27;
@@ -2581,7 +2623,7 @@ int ProcessP2PByeSessionToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_session_
 // step28: IPC/NVR
 int HandleP2PByeSessionToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_session_token)
 {
-	printf("In HandleP2PByeSessionToken:\n");
+	printf("\n[step28: IPC/NVR] In HandleP2PByeSessionToken:\n");
 
 	// verify digest
 	int i;
@@ -2614,7 +2656,7 @@ int HandleP2PByeSessionToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_session_t
 // step29a/29b: IPC - NVR / NVR - IPC
 int ProcessP2PByeLinkToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_link_token)
 {
-	printf("In ProcessP2PByeLinkToken:\n");
+	printf("\n[step29a/29b: IPC - NVR / NVR - IPC] In ProcessP2PByeLinkToken:\n");
 
 	// fill flag
 	p2p_bye_link_token->flag = 29;
@@ -2658,7 +2700,7 @@ int ProcessP2PByeLinkToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_link_token)
 // step30: IPC/NVR
 int HandleP2PByeLinkToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_link_token)
 {
-	printf("In HandleP2PByeLinkToken:\n");
+	printf("\n[step30: IPC/NVR] In HandleP2PByeLinkToken:\n");
 
 	// verify digest
 	int i;
@@ -2688,6 +2730,9 @@ int HandleP2PByeLinkToken(P2PCommContext *cc, P2PAuthToken *p2p_bye_link_token)
 	return TRUE;
 }
 //////////////////////////////////////////////////////////////
+
+
+
 
 //////////////////////////////////////////////////////////////
 //begin interface between IPC and NVR

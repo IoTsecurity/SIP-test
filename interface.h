@@ -248,6 +248,9 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID);
 
 int getLocalIdentity(identity *localIdentity, char *localUserID);
 
+
+int getSecureLinkNum(const SecureLinks *securelinks, const char *id);
+
 /////////////////////////// filled by yaoyao ///////////////////////////////////
 /* Scene 1 :
  * Register and authentication process
@@ -316,7 +319,7 @@ typedef struct RegisterContext{
 	unsigned char auth_id_next[SHA256_DIGEST_SIZE]; // for re-authentiation
 
 	// used in key negotiation part
-	EC_KEY *ecdh;
+	EC_KEY *ecdh; // should call "EC_KEY_free(ecdh);" after register process
 	unsigned char MK_ID[SHA256_DIGEST_SIZE];
 	unsigned char self_randnum_next[RAND_LEN];
 	unsigned char peer_randnum_next[RAND_LEN];
