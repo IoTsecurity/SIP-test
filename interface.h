@@ -248,6 +248,9 @@ EVP_PKEY * getprivkeyfromprivkeyfile(char *userID);
 
 int getLocalIdentity(identity *localIdentity, char *localUserID);
 
+
+int getSecureLinkNum(const SecureLinks *securelinks, const char *id);
+
 /////////////////////////// filled by yaoyao ///////////////////////////////////
 /* Scene 1 :
  * Register and authentication process
