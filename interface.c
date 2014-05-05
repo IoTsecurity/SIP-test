@@ -149,7 +149,7 @@ static int getKeyRingNum(const KeyBox *keybox, const char *id)
 	return -1;
 }
 
-static int getSecureLinkNum(const SecureLinks *securelinks, const char *id)
+int getSecureLinkNum(const SecureLinks *securelinks, const char *id)
 {
 	int i;
 	for(i=0; i < securelinks->nlinks; i++){
