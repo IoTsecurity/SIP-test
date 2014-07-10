@@ -35,7 +35,7 @@ const char *CAID = "0";
 
 static int annotation = 2;  //1-lvshichao,2-yaoyao
 
-const time_t TimeThreshold = 120; // in seconds
+const _time_t TimeThreshold = 120; // in seconds   --modify by jzw
 enum DeviceType Self_type; // =IPC/SIPserver/NVR/Client
 KeyBox Keybox;
 SecureLinks Securelinks;
@@ -920,6 +920,7 @@ int ProcessWAPIProtocolAuthActive(RegisterContext *rc, AuthActive *auth_active_p
 	gen_randnum((BYTE *)auth_active_packet->aechallenge, sizeof(auth_active_packet->aechallenge));
 
 	//fill auth active time
+	auth_active_packet->authactivetime=0;
 	time(&auth_active_packet->authactivetime);
 
 	/*
@@ -1040,8 +1041,9 @@ int HandleWAPIProtocolAuthActive(RegisterContext *rc, AuthActive *auth_active_pa
 		return FALSE;
 	}
 
+	//运算注意32位上把时间值改成64位后,但函数time()只对低32位赋值，高32位不赋值，导致如果一开始没有初始化的话，高32位就是乱码，导致后面结果不正确
 	//verify auth active time
-    time_t  t;
+	_time_t  t=0;
     time(&t);
     if((t - auth_active_packet->authactivetime) > TimeThreshold){
     	return FALSE;
@@ -2172,7 +2174,7 @@ int ProcessP2PKeyDistribution(P2PLinkContext *lc, P2PKeyDistribution *p2p_key_di
 	 */
 	unsigned char key[24];
 	unsigned char iv[8];
-	unsigned char ciphertext[CIPHER_TEXT_LEN];
+	unsigned char ciphertext[CIPHER_TEXT_LEN+8];  //modify by jzw
 	int ciphertext_len = CIPHER_TEXT_LEN;
 	memset(key, 0, 24);
 	memset(iv, 0, 8);

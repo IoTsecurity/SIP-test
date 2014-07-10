@@ -1,4 +1,4 @@
-test.d test.o: ../test.c ../interface.h \
+test.d: ../test.c ../interface.h \
  /usr/local/openssl/include/openssl/crypto.h \
  /usr/local/openssl/include/openssl/e_os2.h \
  /usr/local/openssl/include/openssl/opensslconf.h \

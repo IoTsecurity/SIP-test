@@ -1,4 +1,4 @@
-interface.d interface.o: ../interface.c ../interface.h \
+interface.d: ../interface.c ../interface.h \
  /usr/local/openssl/include/openssl/crypto.h \
  /usr/local/openssl/include/openssl/e_os2.h \
  /usr/local/openssl/include/openssl/opensslconf.h \
